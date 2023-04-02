@@ -27,7 +27,7 @@ export const deleteTodo = createAsyncThunk(
           method: "delete",
         }
       );
-      console.log(responce);
+
       if (!responce.ok) {
         throw new Error("Can`t deleted task. Server error");
       }
@@ -39,6 +39,73 @@ export const deleteTodo = createAsyncThunk(
   }
 );
 
+export const toggelStatus = createAsyncThunk(
+  "todos/toggelStatus",
+  async function (id, { rejectWithValue, dispatch, getState }) {
+    const todo = getState().todos.todos.find((todo) => todo.id === id);
+
+    try {
+      const responce = await fetch(
+        `https://jsonplaceholder.typicode.com/todos/${id}`,
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            completed: !todo.completed,
+          }),
+        }
+      );
+
+      if (!responce.ok) {
+        throw new Error("Can`t toggel Status. Server error");
+      }
+
+      dispatch(toggelTodoComlite({ id }));
+    } catch (error) {
+      return rejectWithValue(error.message);
+    }
+  }
+);
+
+export const addNewTodo = createAsyncThunk(
+  "todos/addNewTodo",
+  async function (text, { rejectWithValue, dispatch }) {
+    try {
+      const todo = {
+        title: text,
+        userId: 1,
+        completed: false,
+      };
+
+      const response = await fetch(
+        "https://jsonplaceholder.typicode.com/todos",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(todo),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Can`t add task. Server error.");
+      }
+
+      const data = await response.json();
+      dispatch(addTodo(data));
+    } catch (error) {
+      return rejectWithValue(error.message);
+    }
+  }
+);
+const setError = (state, action) => {
+  state.status = "rejected";
+  state.error = action.payload;
+};
+
 const todoSlice = createSlice({
   name: "todos",
   initialState: {
@@ -48,11 +115,7 @@ const todoSlice = createSlice({
   },
   reducers: {
     addTodo(state, action) {
-      state.todos.push({
-        id: new Date().toISOString(),
-        text: action.payload.text,
-        complited: false,
-      });
+      state.todos.push(action.payload);
     },
     removeTodo(state, action) {
       state.todos = state.todos.filter((todo) => todo.id !== action.payload.id);
@@ -61,7 +124,7 @@ const todoSlice = createSlice({
       const toggelTodo = state.todos.find(
         (todo) => todo.id === action.payload.id
       );
-      toggelTodo.complited = !toggelTodo.complited;
+      toggelTodo.completed = !toggelTodo.completed;
     },
   },
   extraReducers: {
@@ -76,13 +139,12 @@ const todoSlice = createSlice({
       state.todos = action.payload;
     },
     // Неполадка
-    [fetchTodos.rejected]: (state, action) => {
-      state.status = "rejected";
-      state.error = action.payload;
-    },
+    [fetchTodos.rejected]: setError,
+    [deleteTodo.rejected]: setError,
+    [toggelStatus.rejected]: setError,
   },
 });
 
-export const { addTodo, removeTodo, toggelTodoComlite } = todoSlice.actions;
+const { addTodo, removeTodo, toggelTodoComlite } = todoSlice.actions;
 
 export default todoSlice.reducer;
