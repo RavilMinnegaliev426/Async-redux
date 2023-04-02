@@ -1,6 +1,6 @@
 import { useDispatch } from "react-redux";
-import { removeTodo, toggelTodoComlite } from "../store/todoSlice";
-const Todoitem = ({ id, text, completed }) => {
+import { deleteTodo, toggelTodoComlite } from "../store/todoSlice";
+const Todoitem = ({ id, title, completed }) => {
   const dispatch = useDispatch();
   return (
     <li>
@@ -9,8 +9,8 @@ const Todoitem = ({ id, text, completed }) => {
         checked={completed}
         onChange={() => dispatch(toggelTodoComlite({ id }))}
       />
-      <span>{text}</span>
-      <span className="deleted" onClick={() => dispatch(removeTodo({ id }))}>
+      <span>{title}</span>
+      <span className="deleted" onClick={() => dispatch(deleteTodo(id))}>
         &times;
       </span>
     </li>
